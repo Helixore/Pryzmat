@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    "rest_framework.authtoken",
     'Pryzmat'
 ]
 
@@ -84,8 +85,18 @@ DATABASES = {
 }
 
 CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000"
+    "http://localhost:5173"
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication'
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated"
+    ]
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

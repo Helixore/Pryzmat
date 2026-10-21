@@ -16,21 +16,30 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.authtoken import views as ATViews
 from rest_framework import routers
 from Pryzmat import views
+from Pryzmat.lib import PryzmatAuthToken
 
 router = routers.DefaultRouter()
-router.register(r'conductentries', views.conductEntry.ConductEntryView, 'conductentry')
-router.register(r'studentclass', views.studentClass.StudentClassView, 'studentclass')
-router.register(r'schedule', views.schedule.ScheduleView, 'schedule')
-router.register(r'teacher', views.teacher.TeacherView, 'teacher')
-router.register(r'grade', views.grade.GradeView, 'grade')
-router.register(r'student', views.student.StudentView, 'student')
-router.register(r'parent', views.parent.ParentView, 'parent')
-router.register(r'subject', views.subject.SubjectView, 'subject')
+router.register(r'conductentries', views.conductEntry.ConductEntryView, 'conductentry') #git
+router.register(r'studentclass', views.studentClass.StudentClassView, 'studentclass') #git
+router.register(r'schedule', views.schedule.ScheduleView, 'schedule') #git
+router.register(r'teacher', views.teacher.TeacherView, 'teacher') #git
+router.register(r'grade', views.grade.GradeView, 'grade') #git
+router.register(r'student', views.student.StudentView, 'student') #git
+router.register(r'parent', views.parent.ParentView, 'parent') #git
+router.register(r'subject', views.subject.SubjectView, 'subject') #git
+router.register(r'lesson', views.lesson.LessonView, 'lesson') #git
+router.register(r'message', views.message.MessageView, 'message')
+router.register(r'presence', views.presence.PresenceView, 'presence')
+router.register(r'substitution', views.substitution.SubstitutionView, 'substitution')
+router.register(r'principal', views.principal.PrincipalView, 'principal')
+router.register(r'worker', views.worker.WorkerView, 'worker')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth', include('rest_framework.urls')),
     path('api/', include(router.urls)),
+    path('api/login', PryzmatAuthToken.PryzmatAuthToken.as_view())
 ]

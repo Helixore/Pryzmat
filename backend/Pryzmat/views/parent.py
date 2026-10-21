@@ -12,14 +12,14 @@ class ParentView(RoleFilteredQuerysetMixin, viewsets.ModelViewSet):
     serializer_class = ParentSerializer
     queryset = Parent.objects.all()
     
-    permission_classes = [DjangoObjectPermissions, IsTeacherOrPrincipal]
+    permission_classes = [DjangoObjectPermissions]
     
     def filter_for_teacher(self, qs, teacher):
         # oceny wystawione przez niego LUB jego wychowanków (klasa, której jest wychowawcą)
-        return qs.filter(Q(teacher=teacher) | Q(student__homeroom_teacher=teacher)).distinct()
+        return qs.filter(Q(student__studentClass__subject__teacher=teacher) | Q(student__studentClass__homeroomTeacher=teacher)).distinct()
 
     def filter_for_parent(self, qs, parent):
-        return qs.filter(student__parents=parent)
+        return qs.filter(student__parent=parent)
 
     def filter_for_student(self, qs, student):
         return qs.filter(student=student)

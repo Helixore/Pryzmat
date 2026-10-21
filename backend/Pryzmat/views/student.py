@@ -14,10 +14,10 @@ class StudentView(RoleFilteredQuerysetMixin, viewsets.ModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     def filter_for_teacher(self, qs, teacher):
         # oceny wystawione przez niego LUB jego wychowanków (klasa, której jest wychowawcą)
-        return qs.filter(Q(teacher=teacher) | Q(student__homeroom_teacher=teacher)).distinct()
+        return qs.filter(Q(studentClass__subject__teacher=teacher) | Q(studentClass__homeroomTeacher=teacher)).distinct()
 
     def filter_for_parent(self, qs, parent):
-        return qs.filter(student__parents=parent)
+        return qs.filter(parent=parent)
 
     def filter_for_student(self, qs, student):
-        return qs.filter(student=student)
+        return qs.filter(student_id=student.student_id)

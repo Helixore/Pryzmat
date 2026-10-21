@@ -15,7 +15,7 @@ class QuizType(models.TextChoices):
 class StudentClass(models.Model):
     year = models.IntegerField()
     symbol = models.CharField(max_length=10)
-    
+
     def __str__(self):
         return f"{self.year}/{self.symbol}"
 
@@ -36,7 +36,7 @@ class Teacher(models.Model):
     address = models.CharField(max_length=256)
     email = models.EmailField()
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    formTutor = models.OneToOneField(StudentClass, on_delete=models.SET_NULL, null=True, blank=True, related_name="homeroom_teacher")
+    formTutor = models.OneToOneField(StudentClass, on_delete=models.SET_NULL, null=True, blank=True, related_name="homeroomTeacher")
     
     def __str__(self):
         return f"{self.firstName} {self.lastName} - nauczyciel"
@@ -55,6 +55,8 @@ class Substitution(models.Model):
     date_from = models.DateField()
     date_to = models.DateField()
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"{self.substituteTeacher} -> {self.teacherSubstitutedFor} - {self.date_from}/{self.date_to}"
 
 class Lesson(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True)
@@ -64,7 +66,7 @@ class Lesson(models.Model):
     dateTimeTo = models.DateTimeField()
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
     def __str__(self):
-        return f"{self.subject}"
+        return f"{self.subject} - {self.dateTimeFrom.date()}/{self.dateTimeFrom.time()}"
 
 class Parent(models.Model):
     firstName = models.CharField(max_length=64)
@@ -74,13 +76,14 @@ class Parent(models.Model):
     address = models.CharField(max_length=256)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     def __str__(self):
-        return f"{self.firstName} {self.firstName} - rodzic"
+        return f"{self.firstName} {self.lastName} - rodzic"
 
 class Student(models.Model):
     student_id = models.CharField(max_length=32, unique=True)
     firstName = models.CharField(max_length=64)
     lastName = models.CharField(max_length=128)
     PESEL = models.CharField(max_length=11, unique=True)
+    email = models.EmailField()
     dateOfBirth = models.DateField()
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     parent = models.ForeignKey(Parent, on_delete=models.SET_NULL, null=True)
@@ -114,10 +117,12 @@ class ConductEntry(models.Model):
     points = models.IntegerField(default=0)
     date_of_issue = models.DateTimeField(auto_now_add=True)
     student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True)
+    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True)
     def __str__(self):
         return f"{self.student} - {self.message}"
     
 class Message(models.Model):
+    theme = models.CharField(max_length=256)
     message = models.CharField(max_length=1024)
     date_of_issue = models.DateTimeField(auto_now_add=True)
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sender')
@@ -128,19 +133,27 @@ class Message(models.Model):
 class Principal(models.Model):
     firstName = models.CharField(max_length=64)
     lastName = models.CharField(max_length=128)
+    address = models.CharField(max_length=256)
+    email = models.EmailField()
     PESEL = models.CharField(max_length=11, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"{self.firstName} {self.lastName} - dyrektor"
     
 class Worker(models.Model):
     firstName = models.CharField(max_length=64)
     lastName = models.CharField(max_length=128)
     PESEL = models.CharField(max_length=11, unique=True)
+    email = models.EmailField()
     address = models.CharField(max_length=256)
+    jobTitle = models.CharField(max_length=128)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"{self.firstName} {self.lastName} - {self.jobTitle}"
     
 class Quiz(models.Model):
     name = models.CharField(max_length=256)
-    type = models.CharField(choices=QuizType, default=QuizType.TEST)
+    type = models.CharField(choices=QuizType.choices, default=QuizType.TEST, max_length=128)
     lesson = models.OneToOneField(Lesson, on_delete=models.DO_NOTHING)
     
     
