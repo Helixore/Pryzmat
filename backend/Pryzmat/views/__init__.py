@@ -14,3 +14,4 @@ from . import subject
 from . import substitution
 from . import teacher
 from . import worker
+from . import dashboard

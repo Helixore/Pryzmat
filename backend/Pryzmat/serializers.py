@@ -331,4 +331,27 @@ class SubjectSerializer(serializers.ModelSerializer):
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
-        fields = ('name', 'type', 'lesson')
+        fields = ('name', 'type', 'lesson', 'timestamp')
+        
+class UpcomingQuizesSerializer(serializers.Serializer):
+    type = serializers.CharField()
+    quizes = QuizSerializer(many=True)
+
+class UpcomingLessonsSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    lessons = LessonSerializer(many=True)
+
+
+class StudentGradeSummarySerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    average = serializers.FloatField(allow_null=True)  # None when there are no grades
+
+
+class TeacherDashboardSerializer(serializers.Serializer):
+    quizes = UpcomingQuizesSerializer(allow_null=True)
+    lessons = UpcomingLessonsSerializer(allow_null=True)
+    
+class StudentParentDashboardSerializer(serializers.Serializer):
+    quizes = UpcomingQuizesSerializer(allow_null=True)
+    lessons = UpcomingLessonsSerializer(allow_null=True)
+    grades = StudentGradeSummarySerializer(allow_null=True)

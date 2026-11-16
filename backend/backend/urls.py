@@ -37,9 +37,11 @@ router.register(r'substitution', views.substitution.SubstitutionView, 'substitut
 router.register(r'principal', views.principal.PrincipalView, 'principal')
 router.register(r'worker', views.worker.WorkerView, 'worker')
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth', include('rest_framework.urls')),
     path('api/', include(router.urls)),
+    path('api/dashboard', views.dashboard.DashboardView.as_view(), name="dashboard"),
     path('api/login', PryzmatAuthToken.PryzmatAuthToken.as_view())
 ]

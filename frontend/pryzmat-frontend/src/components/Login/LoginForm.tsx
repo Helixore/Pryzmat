@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { apiPost } from "../../API/client.ts";
+import { apiPost } from "../../API/auth/client";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../API/auth/authContext";
 
 export default function LoginForm({ onCreated }) {
+    const {login} = useAuth();
+    const navigate = useNavigate();
     const [formValues, setFormValues] = useState({
         username: "",
         password: ""
@@ -26,19 +30,15 @@ export default function LoginForm({ onCreated }) {
         setError(null);
 
         try {
-        const createdUser = await apiPost("/login", formValues);
-
-        // clear the form after success
-        setFormValues({ username: "", password: "" });
-
-        // optional: let the parent component know (e.g. to refresh a list)
-        if (onCreated) {
-            onCreated(createdUser);
+            await login(formValues);
+            setFormValues({ username: "", password: "" });
+            navigate("/app/dashboard");
+        } 
+        catch (err) {
+            setError(err.message);
         }
-        } catch (err) {
-        setError(err.message);
-        } finally {
-        setSubmitting(false);
+        finally {
+            setSubmitting(false);
         }
     }
     return (
@@ -62,7 +62,7 @@ export default function LoginForm({ onCreated }) {
             /><br/>
 
             <button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : "Create user"}
+                {submitting ? "Logging in..." : "Log in"}
             </button>
 
             {error && <p>Error: {error}</p>}

@@ -154,6 +154,7 @@ class Worker(models.Model):
 class Quiz(models.Model):
     name = models.CharField(max_length=256)
     type = models.CharField(choices=QuizType.choices, default=QuizType.TEST, max_length=128)
+    timestamp = models.DateTimeField(auto_now_add=True)
     lesson = models.OneToOneField(Lesson, on_delete=models.DO_NOTHING)
     
     
