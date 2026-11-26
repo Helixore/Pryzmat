@@ -30,16 +30,6 @@ class QuizType(str, Enum):
     TEST = "Sprawdzian"
     QUIZ = "Kartkówka"
 
-class UserRole(str, Enum):
-    ADMIN = "Administrator"
-    PRINCIPAL = "Dyrektor"
-    TEACHER = "Nauczyciel"
-    WORKER = "Pracownik"
-    PARENT = "Rodzic"
-    STUDENT = "Student"
-    UNASSIGNED = "Nieprzypisany"
-
-
 
 # ============================================================
 # USER
@@ -49,30 +39,15 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str] = mapped_column(String(60))
     username: Mapped[str] = mapped_column(String(128), nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(128), nullable=False)
-    role: Mapped[UserRole] = mapped_column(
-        SQLAlchemyEnum(
-            UserRole,
-            native_enum=False,
-            values_callable=lambda enum: [e.value for e in enum],
-            length=128,
-        ))
-    disabled: Mapped[bool] = mapped_column(Boolean(), default=False, server_default="False")
-    details: Mapped["UserDetails"] = relationship(back_populates="user")
-    
-class UserDetails(Base):
-    __tablename__ = "user_details"
-    id: Mapped[int] = mapped_column(Integer(), primary_key=True, autoincrement=True)
-    first_name: Mapped[str] = mapped_column(String(64), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    email: Mapped[str] = mapped_column(String(128), nullable=False)
-    phone: Mapped[str] = mapped_column(String(12), nullable=False)
-    
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    user: Mapped["User"] = relationship(back_populates="details")
+    hashed_password: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    disabled: Mapped[bool] = mapped_column(Boolean(), default=True, server_default="True")
 
-
+    __mapper_args__ = {
+        "polymorphic_on": type,
+        "polymorphic_identity": "user",
+    }
 # ============================================================
 # STUDENT CLASS
 # ============================================================
@@ -136,32 +111,49 @@ class Schedule(Base):
         return f"S{self.semester}-{self.student_class}"
 
 
-# ============================================================
-# TEACHER
-# ============================================================
+class Admin(User):
+    __tablename__ = "admins"
 
-class Teacher(Base):
-    __tablename__ = "teachers"
+    __mapper_args__ = {
+        "polymorphic_identity": "admin",
+    }
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+    )
     firstName: Mapped[str] = mapped_column(String(64))
     lastName: Mapped[str] = mapped_column(String(128))
     PESEL: Mapped[str] = mapped_column(String(11), unique=True)
     address: Mapped[str] = mapped_column(String(256))
     email: Mapped[str] = mapped_column(String(255))
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
+# ============================================================
+# TEACHER
+# ============================================================
+
+class Teacher(User):
+    __tablename__ = "teachers"
+
+    __mapper_args__ = {
+        "polymorphic_identity": "teacher",
+    }
+
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
     )
+    firstName: Mapped[str] = mapped_column(String(64))
+    lastName: Mapped[str] = mapped_column(String(128))
+    PESEL: Mapped[str] = mapped_column(String(11), unique=True)
+    address: Mapped[str] = mapped_column(String(256))
+    email: Mapped[str] = mapped_column(String(255))
 
     formTutor_id: Mapped[int | None] = mapped_column(
         ForeignKey("student_classes.id", ondelete="SET NULL"),
         unique=True,
         nullable=True,
     )
-
-    user: Mapped["User"] = relationship()
 
     form_tutor: Mapped["StudentClass | None"] = relationship(
         back_populates="homeroom_teacher"
@@ -334,22 +326,22 @@ class Lesson(Base):
 # PARENT
 # ============================================================
 
-class Parent(Base):
+class Parent(User):
     __tablename__ = "parents"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    __mapper_args__ = {
+        "polymorphic_identity": "parent",
+    }
+
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+    )
     firstName: Mapped[str] = mapped_column(String(64))
     lastName: Mapped[str] = mapped_column(String(128))
     PESEL: Mapped[str] = mapped_column(String(11), unique=True)
     email: Mapped[str] = mapped_column(String(255))
     address: Mapped[str] = mapped_column(String(256))
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-    )
-
-    user: Mapped["User"] = relationship()
 
     students: Mapped[list["Student"]] = relationship(
         back_populates="parent"
@@ -363,21 +355,23 @@ class Parent(Base):
 # STUDENT
 # ============================================================
 
-class Student(Base):
+class Student(User):
     __tablename__ = "students"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    __mapper_args__ = {
+        "polymorphic_identity": "student",
+    }
+
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+    )
     student_id: Mapped[str] = mapped_column(String(32), unique=True)
     firstName: Mapped[str] = mapped_column(String(64))
     lastName: Mapped[str] = mapped_column(String(128))
     PESEL: Mapped[str] = mapped_column(String(11), unique=True)
     email: Mapped[str] = mapped_column(String(255))
     dateOfBirth: Mapped[date] = mapped_column(Date)
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-    )
 
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("parents.id", ondelete="SET NULL"),
@@ -389,8 +383,6 @@ class Student(Base):
     studentClass_id: Mapped[int] = mapped_column(
         ForeignKey("student_classes.id", ondelete="RESTRICT")
     )
-
-    user: Mapped["User"] = relationship()
 
     parent: Mapped["Parent | None"] = relationship(
         back_populates="students"
@@ -590,22 +582,22 @@ class Message(Base):
 # PRINCIPAL
 # ============================================================
 
-class Principal(Base):
+class Principal(User):
     __tablename__ = "principals"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    __mapper_args__ = {
+        "polymorphic_identity": "principal",
+    }
+
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+    )
     firstName: Mapped[str] = mapped_column(String(64))
     lastName: Mapped[str] = mapped_column(String(128))
     address: Mapped[str] = mapped_column(String(256))
     email: Mapped[str] = mapped_column(String(255))
     PESEL: Mapped[str] = mapped_column(String(11), unique=True)
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-    )
-
-    user: Mapped["User"] = relationship()
 
     def __str__(self):
         return f"{self.firstName} {self.lastName} - dyrektor"
@@ -615,23 +607,23 @@ class Principal(Base):
 # WORKER
 # ============================================================
 
-class Worker(Base):
+class Worker(User):
     __tablename__ = "workers"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    __mapper_args__ = {
+        "polymorphic_identity": "worker",
+    }
+
+    id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        primary_key=True,
+    )
     firstName: Mapped[str] = mapped_column(String(64))
     lastName: Mapped[str] = mapped_column(String(128))
     PESEL: Mapped[str] = mapped_column(String(11), unique=True)
     email: Mapped[str] = mapped_column(String(255))
     address: Mapped[str] = mapped_column(String(256))
     jobTitle: Mapped[str] = mapped_column(String(128))
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
-    )
-
-    user: Mapped["User"] = relationship()
 
     def __str__(self):
         return f"{self.firstName} {self.lastName} - {self.jobTitle}"
