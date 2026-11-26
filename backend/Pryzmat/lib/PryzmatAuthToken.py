@@ -2,6 +2,13 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
+def get_role(user):
+    for role in ('teacher', 'parent', 'student', 'principal', 'worker'):
+        if hasattr(user, role):
+            return role
+    return None
+
+
 class PryzmatAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
@@ -13,6 +20,6 @@ class PryzmatAuthToken(ObtainAuthToken):
             'token': token.key,
             'user_id': user.pk,
             'username': user.username,
-            "email": user.email
+            "email": user.email,
+            'role': get_role(user),  # NEW
         })
-    

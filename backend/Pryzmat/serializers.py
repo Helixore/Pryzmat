@@ -5,47 +5,7 @@ from rest_framework.permissions import BasePermission
 from .models import ConductEntry, StudentClass, Schedule, Teacher, Grade, Student, Subject, Parent, Presence, Substitution, Lesson, Message, Principal, Worker, Quiz
 from .lib import validators
 
-class ConductEntrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ConductEntry
-        fields = ('message', 'type_of_entry', 'points', 'date_of_issue', 'student', 'teacher')
-    
-    def create(self, validated_data):
-        if validated_data.get("student") is None:
-            raise ValidationError("Nie można utworzyć uwagi, ponieważ żaden student nie został wybrany.")
-        return ConductEntry.objects.create(**validated_data)
-        
-
-    
-        
-class ScheduleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Schedule
-        fields = ('semester', 'studentClass', 'dateFrom', 'dateTo')
-        
-class GradeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Grade
-        fields = ('value', 'description', 'date_of_issue', 'student', 'subject')
-        
-    def create(self, validated_data):
-        validators.validate_grade(validated_data.get("value"))
-        return Grade.objects.create(**validated_data)
-
-class PresenceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Presence
-        fields = ('present', 'excused', 'date_of_issue', 'subject', 'student', 'lesson')
-
-class SubstitutionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Substitution
-        fields = ('substituteTeacher', 'teacherSubstitutedFor', 'date_from', 'date_to', 'subject')
-
-class LessonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lesson
-        fields = ('subject', 'theme', 'completed', 'dateTimeFrom', 'dateTimeTo', 'schedule')
+   
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -208,9 +168,6 @@ class StudentSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
-        
-
-
 class ParentSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True)
@@ -269,7 +226,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Teacher
-        fields = ('firstName', 'lastName', 'PESEL', 'address', 'email', 'formTutor', 'email', 'username', 'password')
+        fields = ('firstName', 'lastName', 'PESEL', 'address', 'email', 'username', 'password')
     
     def create(self, validated_data):
         username = validated_data.pop('username')
@@ -315,6 +272,18 @@ class TeacherSerializer(serializers.ModelSerializer):
             user.save()
 
         return super().update(instance, validated_data)
+    
+class ConductEntrySerializer(serializers.ModelSerializer):
+    teacher = TeacherSerializer()
+    student = StudentSerializer()
+    class Meta:
+        model = ConductEntry
+        fields = ('message', 'type_of_entry', 'points', 'date_of_issue', 'student', 'teacher')
+    
+    def create(self, validated_data):
+        if validated_data.get("student") is None:
+            raise ValidationError("Nie można utworzyć uwagi, ponieważ żaden student nie został wybrany.")
+        return ConductEntry.objects.create(**validated_data)
 
 class StudentClassSerializer(serializers.ModelSerializer):
     students = StudentSerializer(many=True, read_only=True, source='student_set')
@@ -323,12 +292,55 @@ class StudentClassSerializer(serializers.ModelSerializer):
         model = StudentClass
         fields = ('year', 'symbol', 'students', 'homeroomTeacher')
 
+class ScheduleSerializer(serializers.ModelSerializer):
+    studentClass = StudentClassSerializer()
+    class Meta:
+        model = Schedule
+        fields = ('semester', 'studentClass', 'dateFrom', 'dateTo')
+
 class SubjectSerializer(serializers.ModelSerializer):
+    teacher = TeacherSerializer()
+    studentClass = StudentClassSerializer()
     class Meta:
         model = Subject
         fields = ('name', 'hours', 'teacher', 'studentClass')
+    
+class SubstitutionSerializer(serializers.ModelSerializer):
+    substituteTeacher = TeacherSerializer()
+    teacherSubstitutedFor = TeacherSerializer()
+    subject = SubjectSerializer()
+    class Meta:
+        model = Substitution
+        fields = ('substituteTeacher', 'teacherSubstitutedFor', 'date_from', 'date_to', 'subject')
+
+class LessonSerializer(serializers.ModelSerializer):
+    schedule = ScheduleSerializer()
+    subject = SubjectSerializer()
+    class Meta:
+        model = Lesson
+        fields = ('subject', 'theme', 'completed', 'dateTimeFrom', 'dateTimeTo', 'schedule')
+
+class PresenceSerializer(serializers.ModelSerializer):
+    lesson = LessonSerializer()
+    student = StudentSerializer()
+    subject = SubjectSerializer()
+    class Meta:
+        model = Presence
+        fields = ('present', 'excused', 'date_of_issue', 'subject', 'student', 'lesson')
+
+class GradeSerializer(serializers.ModelSerializer):
+    student = StudentSerializer()
+    subject = SubjectSerializer()
+    class Meta:
+        model = Grade
+        fields = ('value', 'description', 'date_of_issue', 'student', 'subject')
         
+    def create(self, validated_data):
+        validators.validate_grade(validated_data.get("value"))
+        return Grade.objects.create(**validated_data)
+
 class QuizSerializer(serializers.ModelSerializer):
+    lesson = LessonSerializer()
     class Meta:
         model = Quiz
         fields = ('name', 'type', 'lesson', 'timestamp')

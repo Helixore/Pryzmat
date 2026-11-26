@@ -1,0 +1,1 @@
+from db_models.models import User, Student, StudentClass, Subject, Substitution, Schedule, Teacher, Worker, Parent, Presence, Principal, ConductEntry, Quiz, Grade, Lesson

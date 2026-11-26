@@ -1,0 +1,79 @@
+.nested-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.nested-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.nested-object {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.nested-object > summary {
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.nested-object > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nested-object > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.5rem;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.nested-object[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.nested-fields {
+  margin: 0;
+  padding: 0 0.75rem 0.6rem;
+}
+
+.nested-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.nested-row dt {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.nested-row dd {
+  margin: 0;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.nested-fields pre {
+  margin: 0;
+  padding: 0.6rem;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+@media (max-width: 860px) {
+  .nested-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
